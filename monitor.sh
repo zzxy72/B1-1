@@ -3,7 +3,8 @@
 set -u
 set -o pipefail
 
-APP_PROCESS_NAME="${APP_PROCESS_NAME:-agent_app.py}"
+APP_PROCESS_NAME="${APP_PROCESS_NAME:-agent-app}"
+APP_PROCESS_PATTERN="${APP_PROCESS_PATTERN:-(^|/|[[:space:]])${APP_PROCESS_NAME}($|[[:space:]])}"
 AGENT_PORT="${AGENT_PORT:-15034}"
 AGENT_LOG_DIR="${AGENT_LOG_DIR:-/var/log/agent-app}"
 LOG_FILE="${LOG_FILE:-${AGENT_LOG_DIR}/monitor.log}"
@@ -69,7 +70,7 @@ rotate_log_if_needed() {
 }
 
 find_app_pid() {
-  pgrep -f "$APP_PROCESS_NAME" | head -n 1
+  pgrep -f "$APP_PROCESS_PATTERN" | head -n 1
 }
 
 check_process() {
@@ -96,7 +97,16 @@ check_port() {
 
 check_firewall() {
   if command -v ufw >/dev/null 2>&1; then
-    if ufw status 2>/dev/null | grep -qi '^Status: active'; then
+    local ufw_status
+    if [[ "$(id -u)" -eq 0 ]]; then
+      ufw_status="$(ufw status 2>/dev/null || true)"
+    elif command -v sudo >/dev/null 2>&1; then
+      ufw_status="$(sudo -n ufw status 2>/dev/null || true)"
+    else
+      ufw_status=""
+    fi
+
+    if printf '%s\n' "$ufw_status" | grep -qi '^Status: active'; then
       print_ok "Checking UFW firewall status..."
     else
       print_warning "UFW firewall is not active."
