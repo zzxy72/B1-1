@@ -216,6 +216,10 @@ monitor.log      -> monitor.log.1
 monitor.log.1    -> monitor.log.2
 monitor.log.2    -> monitor.log.3
 ```
+monitor.log      현재 새 로그가 쌓이는 파일
+monitor.log.1    가장 최근에 회전된 이전 로그
+monitor.log.2    monitor.log.1보다 더 오래된 로그
+monitor.log.10   백업 중 가장 오래된 로그
 
 최대 10개까지만 보관한다. `monitor.log.11`이 생기면 삭제한다.
 
